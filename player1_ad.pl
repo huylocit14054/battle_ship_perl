@@ -60,21 +60,7 @@ else
 {
         #First turn play here
         #Player 1 fire first
-        # print "You go first\nChoose your ship";
-        # print "Input a row (1->5):\n";
-        # my $index_x;
-        # chomp($index_x=<STDIN>);
-        # print "Input a column (a->e):\n";
-        # my $index_y;
-        #  chomp($index_y =<STDIN>);
         
-        # #check validate of the input
-        # while(checkValidInput($index_x,$index_y,1,@map)==0){
-        #     print "Input a row (1->5):\n";
-        #      chomp($index_x=<STDIN>);
-        #     print "Input a column (a->e):\n";
-        #      chomp($index_y=<STDIN>);
-        # }
         print "You go first\nChoose your ship";
         my @input = select_ship(1,@map);
         my $index_x = $input[0];
