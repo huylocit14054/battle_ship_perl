@@ -56,21 +56,7 @@ sub create_map(){
     @map 
 }
 
-#print the map
-sub print_map()
-{
-    my @map = @_;
-    print("  a b c d e\n");
-    for(my $i=0; $i<5 ;$i++){
-        print $i+1;
-        print " ";
-        for(my $j=0; $j<5 ;$j++){
-            print $map[$i][$j];
-            print " ";
-        }
-        print"\n";
-    }
-}
+
 
 #convert the map to string in order to send to the client
 sub mapToString(){
@@ -249,14 +235,14 @@ sub player_action(){
     my $i_row =  $index_x-1; 
     my $i_column = $re_column{$index_y};
     
+    my $play = 1;
     my @map = splice(@_ , 3);
 
     #check with action the user has already done (equal 0 is done)
     my $isMove = 1;
     my $isFire = 1;
     
-   
-   
+    my ($return_map,$to_x,$to_y,$at_x,$at_y)="";
     #loop and get the input of user
     while($isMove == 1 ||  $isFire == 1)
     {
@@ -277,7 +263,8 @@ sub player_action(){
         #if the user select a ship which canot move the user have to reinput another ship
         if($can_move==0 && $can_fire==0){
             print "This ship cannot move or fire\n";
-            return 0;
+            $play = 0; 
+            last;
         }
         
         print "Please input the code for your action\n";
@@ -293,17 +280,41 @@ sub player_action(){
         chomp(my $action_code =<STDIN>);
         if($action_code eq "1" && $isMove==1){
             print "This is Moving part\n";
+            ($return_map,$to_x,$to_y) = moveShip($ship_value,$i_row,$i_column,@map); 
+            @map = @$return_map;
+            $i_row = $to_x-1;
+            $i_column = $re_column{$to_y};
+
+            print_map(@map);
             $isMove=0;
         }
         elsif($action_code eq "2" && $can_fire==1 && $isFire==1){
             print "This is Fire part\n";
+            ($return_map,$at_x,$at_y) = fireShip($ship_value,$i_row,$i_column,@map); 
+            @map = @$return_map;
+
+            print_map(@map);
             $isFire =0;
         }
         else{
             print "Error action\n";
         }
     }
-    return 1;
+    if(! defined($to_x)){
+        $to_x = "f";
+    }
+    if(! defined($to_y)){
+        $to_y = "f";
+    }
+    if(! defined($at_x)){
+        $at_x = "f";
+    }
+    if(! defined($at_y)){
+        $at_y = "f";
+    }
+   
+    return (\@map,$play,$to_x,$to_y,$at_x,$at_y)
+
 }
 
 #check the suround of the ship can be fire or not 
@@ -340,16 +351,196 @@ sub canMove(){
     my $mdown = checkDown($ship_value,$i_row,$i_column,@map);
     my $mup = checkUp($ship_value,$i_row,$i_column,@map);
 
-    print "l: $mleft\n";
-    print "r: $mright\n";
-    print "d: $mdown\n";
-    print "u: $mup\n"; 
+    # print "l: $mleft\n";
+    # print "r: $mright\n";
+    # print "d: $mdown\n";
+    # print "u: $mup\n"; 
     if($mleft==2 || $mright==2 || $mdown==2 || $mup==2){
         return 1;
     }
     else{
         return 0;
     }
+
+}
+#move the ship to the position user want
+#return the new position if the ship
+#return the new map
+sub moveShip()
+{
+    my $ship_value = $_[0];
+    my $i_row = $_[1];
+    my $i_column = $_[2];
+    my @map = splice(@_ , 3);
+
+    my $mleft = checkLeft($ship_value,$i_row,$i_column,@map);
+    my $mright = checkRight($ship_value,$i_row,$i_column,@map);
+    my $mdown = checkDown($ship_value,$i_row,$i_column,@map);
+    my $mup = checkUp($ship_value,$i_row,$i_column,@map);
+
+    my $from_x;
+    my $from_y;
+    my $to_x;
+    my $to_y;
+
+    print "Enter the position you want to move ship to\n";
+
+    #can move left
+    if($mleft==2){
+        print "1. Move Left\n";
+    }
+    #can move right
+    if($mright==2){
+        print "2. Move Right\n";
+    }
+    #can move down
+    if($mdown==2){
+        print "3. Move Down\n";
+    }
+    #can move up 
+     if($mup==2){
+         print "4. Move Up\n";
+     }
+
+    #if the input is error input again
+    my $error = 1;
+     while($error==1){
+
+         chomp(my $input = <STDIN>);
+         if($input eq "1" && $mleft==2){
+             $map[$i_row][$i_column] = '0';
+             $map[$i_row][$i_column-1] = "$ship_value";
+             $from_x = $i_row +1;
+             $from_y = $column{$i_column};
+             $to_x = $i_row +1;
+             $to_y = $column{$i_column-1};
+             print "Move left from " . $from_x.$from_y ." to ".$to_x.$to_y. "\n";
+
+             $error = 0;
+            
+            
+         }
+         elsif($input eq "2" && $mright==2){
+             $map[$i_row][$i_column] = '0';
+             $map[$i_row][$i_column+1] = "$ship_value";
+
+             $from_x = $i_row +1;
+             $from_y = $column{$i_column};
+             $to_x = $i_row +1;
+             $to_y = $column{$i_column+1};
+             print "Move right from " . $from_x.$from_y ." to ".$to_x.$to_y. "\n";
+
+             $error = 0;
+         }
+         elsif($input eq "3" && $mdown==2){
+             $map[$i_row][$i_column] = '0';
+             $map[$i_row+1][$i_column] = "$ship_value";
+
+             $from_x = $i_row +1;
+             $from_y = $column{$i_column};
+             $to_x = $i_row +1 +1;
+             $to_y = $column{$i_column};
+             print "Move down from " . $from_x.$from_y ." to ".$to_x.$to_y. "\n";
+
+             $error = 0;
+         }
+         elsif($input eq "4" && $mup==2){
+             $map[$i_row][$i_column] = '0';
+             $map[$i_row-1][$i_column] = "$ship_value";
+
+             $from_x = $i_row +1;
+             $from_y = $column{$i_column};
+             $to_x = $i_row;
+             $to_y = $column{$i_column};
+             print "Move up from " . $from_x.$from_y ." to ".$to_x.$to_y. "\n";
+             $error = 0;
+         }
+         else{
+             print "Error cannot move here. Please input again\n";
+         }
+     }
+     return (\@map,$to_x,$to_y);
+     
+}
+
+#fire the ship next to the user
+sub fireShip(){
+    my $ship_value = $_[0];
+    my $i_row = $_[1];
+    my $i_column = $_[2];
+    my @map = splice(@_ , 3);
+
+    my $mleft = checkLeft($ship_value,$i_row,$i_column,@map);
+    my $mright = checkRight($ship_value,$i_row,$i_column,@map);
+    my $mdown = checkDown($ship_value,$i_row,$i_column,@map);
+    my $mup = checkUp($ship_value,$i_row,$i_column,@map);
+
+    my $at_x;
+    my $at_y;
+    print "Enter the position you want to fire\n";
+
+    #can move left
+    if($mleft==1){
+        print "1. Fire Left\n";
+    }
+    #can move right
+    if($mright==1){
+        print "2. Fire Right\n";
+    }
+    #can move down
+    if($mdown==1){
+        print "3. Fire Down\n";
+    }
+    #can move up 
+     if($mup==1){
+         print "4. Fire Up\n";
+     }
+
+    #if the input is error input again
+    my $error = 1;
+     while($error==1){
+
+         chomp(my $input = <STDIN>);
+         if($input eq "1" && $mleft==1){
+            $map[$i_row][$i_column-1] = "0";
+             
+            $at_x = $i_row+1;
+            $at_y = $column{$i_column-1};
+            print "Fire left at " .$at_x.$at_y. "\n";
+
+            $error = 0;
+            
+            
+         }
+         elsif($input eq "2" && $mright==1){
+            $map[$i_row][$i_column+1] = "0";
+            $at_x = $i_row+1;
+            $at_y = $column{$i_column+1};
+            print "Fire right at " .$at_x.$at_y . "\n";
+
+            $error = 0;
+         }
+         elsif($input eq "3" && $mdown==1){
+            $map[$i_row+1][$i_column] = "0";
+            $at_x = $i_row+1+1;
+            $at_y = $column{$i_column};
+            print "Fire down at " .$at_x.$at_y . "\n";
+
+             $error = 0;
+         }
+         elsif($input eq "4" && $mup==1){
+            $map[$i_row-1][$i_column] = "0";
+            $at_x = $i_row;
+            $at_y = $column{$i_column};
+            print "Fire down at " .$at_x.$at_y . "\n";
+            
+             $error = 0;
+         }
+         else{
+             print "Error cannot Fire here. Please input again\n";
+         }
+     }
+     return (\@map,$at_x,$at_y);
 
 }
 
@@ -478,4 +669,21 @@ sub checkUp(){
         return 1;
     }
 }
+
+#print the map
+sub print_map()
+{
+    my @map = @_;
+    print("  a b c d e\n");
+    for(my $i=0; $i<5 ;$i++){
+        print $i+1;
+        print " ";
+        for(my $j=0; $j<5 ;$j++){
+            print $map[$i][$j];
+            print " ";
+        }
+        print"\n";
+    }
+}
+
 1 #have to return 1 

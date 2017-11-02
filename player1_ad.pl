@@ -33,12 +33,13 @@ print_map(@map);
 #receive the dice result of the server
 my $dice;
 $socket->recv($dice,1);
-print "result:" . $dice . "\n";
 
 my $player1_ship = 5;
 my $player2_ship = 5;
 #end turn will check if the user is end of turn
 my $end_turn;
+my($return_map,$play,$to_x,$to_y,$at_x,$at_y,$index_x,$index_y);
+
 if($dice == 2)
 {
         #wait for the player 2 and receive the ship and the end turn
@@ -52,9 +53,54 @@ if($dice == 2)
         $string_map ="";
         $socket->recv($string_map,1024);
         @map = mapToArray($string_map);
-        print "Your ship had been destroyed\n";
+
+
+        #receive player 2 's' previous action
+        #receive player input x
+        $index_x ="";
+        $socket->recv($index_x,1);
+        #select(undef, undef, undef, 0.25);
+        #receive player input y
+        $index_y ="";
+        $socket->recv($index_y,1);
+        #select(undef, undef, undef, 0.25);
+        #receive player move position x
+        $to_x ="";
+        $socket->recv($to_x,1);
+        #select(undef, undef, undef, 0.25);
+        #receive player move position y
+        $to_y ="";
+        $socket->recv($to_y,1);
+        #select(undef, undef, undef, 0.25);
+        #receive player fire position x
+        $at_x ="";
+        $socket->recv($at_x,1);
+        #select(undef, undef, undef, 0.25);
+        #receive player fire position y
+        $at_y ="";
+        $socket->recv($at_y,1);
+        #select(undef, undef, undef, 0.25);
+
         print_map(@map);
 
+        print "Enermy selected ship at location: ".$index_x.$index_y."\n";
+        if($to_x ne "f"  && $to_y ne "f"){
+            
+            print "The enermy ship move to ".$to_x.$to_y."\n";
+        }
+        else{
+            print "The user has not moved any where\n";
+        }
+
+        if($at_x ne "f" && $at_y ne "f"){
+            
+            print "The enermy ship fire at ".$at_x.$at_y."\n";
+        }
+        else{
+            print "The user has not fired any where\n";
+        }
+         print "Ship player 1:  $player1_ship \n";
+        print "Ship player 2:  $player2_ship \n";
 }
 else
 {
@@ -63,88 +109,199 @@ else
         
         print "You go first\nChoose your ship";
         my @input = select_ship(1,@map);
-        my $index_x = $input[0];
-        my $index_y = $input[1];
+        $index_x = $input[0];
+        $index_y = $input[1];
 
         #player turn
-        my $play = player_action(1,$index_x,$index_y,@map);
+        ($return_map,$play,$to_x,$to_y,$at_x,$at_y) = player_action(1,$index_x,$index_y,@map);
         #if the user select a stuck ship the user have to select again
         while($play==0){
                 @input  = select_ship(1,@map);
                 $index_x = $input[0];
                 $index_y = $input[1];
-                $play = player_action(1,$index_x,$index_y,@map);
+                ($return_map,$play,$to_x,$to_y,$at_x,$at_y) = player_action(1,$index_x,$index_y,@map);
         }
         
-        # #Player fire a random enermy ship
-        # @map = fire_random(2,@map);
-        # print_map(@map);
-        # #reduce the ship of enermy by 1
-        # $player2_ship--;
-        # #end the turn
-        # $end_turn = 2;
+        @map = @$return_map;
+        
 
-        # #send ship end_turn to player 2 
-        # $socket->send($player1_ship);
-        # $socket->send($player2_ship);
-        # $socket->send($end_turn);
+        #reduce the ship of enermy by 
+        if($at_x ne "f" && $at_y ne "f")
+        {
+                $player2_ship--;
+        }
+        print "Ship player 1:  $player1_ship \n";
+        print "Ship player 2:  $player2_ship \n";
+        #end the turn
+        $end_turn = 2;
 
-        # #send new map to the player2
-        # $string_map ="";
-        # $string_map = mapToString(@map); 
-        # $socket->send($string_map);
+        #send ship end_turn to player 2 
+        $socket->send($player1_ship);
+        $socket->send($player2_ship);
+        $socket->send($end_turn);
+
+        #send new map to the player2
+        $string_map ="";
+        $string_map = mapToString(@map); 
+        $socket->send($string_map);
+        select(undef, undef, undef, 0.25);
+
+        #send player previous action to player 2
+        #send player input x
+        $socket->send($index_x);
+        select(undef, undef, undef, 0.25);
+        #send player input y
+        $socket->send($index_y);
+        select(undef, undef, undef, 0.25);
+        #send player move position x
+        $socket->send($to_x);
+        select(undef, undef, undef, 0.25);
+        #send player move position y
+        $socket->send($to_y);
+        select(undef, undef, undef, 0.25);
+        #send player fire position x
+        $socket->send($at_x);
+        select(undef, undef, undef, 0.25);
+        #send player fire position y
+        $socket->send($at_y);
+        select(undef, undef, undef, 0.25);
 }
 
     
-# #run game until one of the player is out of ship
-# while(end_game($player1_ship,$player2_ship)==0){
-#     #end_turn = 1 => player 1 turn
-#     if($end_turn==1){
-#         print "Your turn\n";
-#         #fire random enermy ship
-#         @map = fire_random(2,@map);
-#         print_map(@map);
-#         #reduce the enermy ship
-#         $player2_ship--;
-#         #end the turn
-#         $end_turn=2;
+#run game until one of the player is out of ship
+while(end_game($player1_ship,$player2_ship)==0){
+    #end_turn = 1 => player 1 turn
+    if($end_turn==1){
+        print "Your turn\n";
+         my @input = select_ship(1,@map);
+        $index_x = $input[0];
+        $index_y = $input[1];
 
-#         #Send the infomation to the player 2
-#         $socket->send($player1_ship);
-#         $socket->send($player2_ship);
-#         $socket->send($end_turn);
+        #player turn
+        ($return_map,$play,$to_x,$to_y,$at_x,$at_y) = player_action(1,$index_x,$index_y,@map);
+        #if the user select a stuck ship the user have to select again
+        while($play==0){
+                @input  = select_ship(1,@map);
+                $index_x = $input[0];
+                $index_y = $input[1];
+                ($return_map,$play,$to_x,$to_y,$at_x,$at_y) = player_action(1,$index_x,$index_y,@map);
+        }
+        
+        @map = @$return_map;
+        
 
-#         #send new map to the player2
-#         $string_map ="";
-#         $string_map = mapToString(@map); 
-#         $socket->send($string_map);
-#     }
-#     #end_turn = 2 => player 2 turn 
-#     if($end_turn==2 && $player2_ship!=0){
-#         print "Player 2 turn\n";
-#         #receive the number of ship and $end_turn 
-#         $socket->recv($player1_ship,1);
-#         $socket->recv($player2_ship,1);
-#         $socket->recv($end_turn,1);
+        #reduce the ship of enermy by 
+        if($at_x ne "f" && $at_y ne "f")
+        {
+                $player2_ship--;
+        }
+        print "Ship player 1:  $player1_ship \n";
+        print "Ship player 2:  $player2_ship \n";
+        #end the turn
+        $end_turn = 2;
 
-#         #receive the new map
-#         $string_map ="";
-#         $socket->recv($string_map,1024);
-#         @map = mapToArray($string_map);
-#         print "Your ship had been destroyed\n";
-#         print_map(@map);
-#     }
+        #send ship end_turn to player 2 
+        $socket->send($player1_ship);
+        $socket->send($player2_ship);
+        $socket->send($end_turn);
 
-# }
+        #send new map to the player2
+        $string_map ="";
+        $string_map = mapToString(@map); 
+        $socket->send($string_map);
+        select(undef, undef, undef, 0.25);
 
-# my $win = Iswin($player1_ship,$player2_ship);
-# print "Win: Player ". $win. "\n";
-# #print the winner
-# if(Iswin($player1_ship,$player2_ship)==1){
-#     print "You Win\n";
-# }
-# else{
-#     print "You lose\n";
-# }
+        #send player previous action to player 2
+        #send player input x
+        $socket->send($index_x);
+        select(undef, undef, undef, 0.25);
+        #send player input y
+        $socket->send($index_y);
+        select(undef, undef, undef, 0.25);
+        #send player move position x
+        $socket->send($to_x);
+        select(undef, undef, undef, 0.25);
+        #send player move position y
+        $socket->send($to_y);
+        select(undef, undef, undef, 0.25);
+        #send player fire position x
+        $socket->send($at_x);
+        select(undef, undef, undef, 0.25);
+        #send player fire position y
+        $socket->send($at_y);
+        select(undef, undef, undef, 0.25);
+    }
+    #end_turn = 2 => player 2 turn 
+    if($end_turn==2 && $player2_ship!=0){
+        print "Player 2 turn\n";
+        $socket->recv($player1_ship,1);
+        $socket->recv($player2_ship,1);
+        $socket->recv($end_turn,1);
+
+        #receive the new map
+        $string_map ="";
+        $socket->recv($string_map,1024);
+        @map = mapToArray($string_map);
+
+
+        #receive player 2 's' previous action
+        #receive player input x
+        $index_x ="";
+        $socket->recv($index_x,1);
+        #select(undef, undef, undef, 0.25);
+        #receive player input y
+        $index_y ="";
+        $socket->recv($index_y,1);
+        #select(undef, undef, undef, 0.25);
+        #receive player move position x
+        $to_x ="";
+        $socket->recv($to_x,1);
+        #select(undef, undef, undef, 0.25);
+        #receive player move position y
+        $to_y ="";
+        $socket->recv($to_y,1);
+        #select(undef, undef, undef, 0.25);
+        #receive player fire position x
+        $at_x ="";
+        $socket->recv($at_x,1);
+        #select(undef, undef, undef, 0.25);
+        #receive player fire position y
+        $at_y ="";
+        $socket->recv($at_y,1);
+        #select(undef, undef, undef, 0.25);
+
+        print_map(@map);
+
+        print "Enermy selected ship at location: ".$index_x.$index_y."\n";
+        if($to_x ne "f"  && $to_y ne "f"){
+            
+            print "The enermy ship move to ".$to_x.$to_y."\n";
+        }
+        else{
+            print "The user has not moved any where\n";
+        }
+
+        if($at_x ne "f" && $at_y ne "f"){
+            
+            print "The enermy ship fire at ".$at_x.$at_y."\n";
+        }
+        else{
+            print "The user has not fired any where\n";
+        }
+         print "Ship player 1:  $player1_ship \n";
+        print "Ship player 2:  $player2_ship \n";
+    }
+
+}
+
+my $win = Iswin($player1_ship,$player2_ship);
+print "Win: Player ". $win. "\n";
+#print the winner
+if(Iswin($player1_ship,$player2_ship)==1){
+    print "You Win\n";
+}
+else{
+    print "You lose\n";
+}
 
 $socket->close();
