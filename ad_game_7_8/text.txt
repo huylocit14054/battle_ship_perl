@@ -1,0 +1,17 @@
+1 tao hash chua 10 tau cua 2 nguoi choi
+	tau se dc so huu theo so 1 va 2 cua nguoi choi 
+	tau se co tau dc cong dame va tau dc cong mau. isPecial = 0 => normal
+								= 1 => + dame = 100
+								= 2 => + heal = 200 
+2 in create map 
+	khi user 1 bo 1 tau vao ban do phai update vi tri location_x location_y array tau 
+		tau cua nguoi choi 1 tu 0 den 4 cho bien dem chay de cong len 
+	khi user 2 bo 1 tau vao ban do phai update vi tri location_x location_y array tau
+		tau cua nguoi choi 2 tu 5 den 9 cho bien dem chay de cong len 
+
+3 khi di chuyen tau
+	cap nhap vi tri moi cua con tay
+
+4 khi ban tau 
+	cap nhap mau cua con tau (HEAL - DAME)
+	if(<=0) => tau chim => cap nham location_x va location_y cua tau do ve -1 
