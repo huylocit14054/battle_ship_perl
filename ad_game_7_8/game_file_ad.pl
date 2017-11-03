@@ -301,7 +301,7 @@ sub player_action(){
     my $isMove = 1;
     my $isFire = 1;
     
-    my ($return_map,$to_x,$to_y,$at_x,$at_y)="";
+    my ($return_map,$to_x,$to_y,$at_x,$at_y,$isDestroy)="";
     #loop and get the input of user
     while($isMove == 1 ||  $isFire == 1)
     {
@@ -349,7 +349,7 @@ sub player_action(){
         }
         elsif($action_code eq "2" && $can_fire==1 && $isFire==1){
             print "You are firing\n";
-            ($return_map,$at_x,$at_y) = fireShip($ship_value,$i_row,$i_column,@map); 
+            ($return_map,$at_x,$at_y,$isDestroy) = fireShip($ship_value,$i_row,$i_column,@map); 
             @map = @$return_map;
 
             print_map(@map);
@@ -377,7 +377,7 @@ sub player_action(){
     
     my $ship_string = ShipToString(@ship);
    
-    return (\@map,$play,$to_x,$to_y,$at_x,$at_y,$ship_string);
+    return (\@map,$play,$to_x,$to_y,$at_x,$at_y,$isDestroy,$ship_string);
 
 }
 
@@ -572,13 +572,19 @@ sub fireShip(){
 
     #if the input is error input again
     my $error = 1;
+    my $isDestroy =0; 
      while($error==1){
-
+           
          chomp(my $input = <STDIN>);
          if($input eq "1" && $mleft==1){
             
+            #update for left 
+            $isDestroy = updateHealth($i_row,$i_column,$i_row,$i_column-1); 
             
-            $map[$i_row][$i_column-1] = "0";
+            #if the ship is destroy update the map
+            if($isDestroy==1){
+                $map[$i_row][$i_column-1] = "0";
+            }
              
             $at_x = $i_row+1;
             $at_y = $column{$i_column-1};
@@ -589,7 +595,13 @@ sub fireShip(){
             
          }
          elsif($input eq "2" && $mright==1){
-            $map[$i_row][$i_column+1] = "0";
+            
+            #update the right
+            $isDestroy = updateHealth($i_row,$i_column,$i_row,$i_column+1); 
+            #update the map if the ship is destroy
+            if($isDestroy==1){
+                $map[$i_row][$i_column+1] = "0";
+            }
             $at_x = $i_row+1;
             $at_y = $column{$i_column+1};
             print "Fire right at " .$at_x.$at_y . "\n";
@@ -597,7 +609,14 @@ sub fireShip(){
             $error = 0;
          }
          elsif($input eq "3" && $mdown==1){
-            $map[$i_row+1][$i_column] = "0";
+
+            #update the down
+            $isDestroy = updateHealth($i_row,$i_column,$i_row+1,$i_column); 
+
+            #update the map
+            if($isDestroy==1){
+                $map[$i_row+1][$i_column] = "0";
+            }
             $at_x = $i_row+1+1;
             $at_y = $column{$i_column};
             print "Fire down at " .$at_x.$at_y . "\n";
@@ -605,7 +624,11 @@ sub fireShip(){
              $error = 0;
          }
          elsif($input eq "4" && $mup==1){
-            $map[$i_row-1][$i_column] = "0";
+            #update the down
+            $isDestroy = updateHealth($i_row,$i_column,$i_row-1,$i_column); 
+            if($isDestroy==1){
+                $map[$i_row-1][$i_column] = "0";
+            }
             $at_x = $i_row;
             $at_y = $column{$i_column};
             print "Fire down at " .$at_x.$at_y . "\n";
@@ -616,7 +639,7 @@ sub fireShip(){
              print "Error cannot Fire here. Please input again\n";
          }
      }
-     return (\@map,$at_x,$at_y);
+     return (\@map,$at_x,$at_y,$isDestroy);
 
 }
 
@@ -804,7 +827,39 @@ sub ShipStringConvertToArray(){
 
     return @ship;
 }
+
+#update the HP after fire
+sub updateHealth(){
+    my($fire_x,$fire_y,$dame_x,$dame_y) = (@_);
+
+    #fire ship is the ship which is fired
+    my %fire_ship = getShipByPosition($fire_x,$fire_y);
     
+    #dame ship is the ship which is taking dame
+    #update the HP of the dame ship
+    #return 1 => ship has been destroy
+    #return 0 => ship haven't been destroy
+    for(my $i=0;$i<10;$i++)
+    {
+        if($ship[$i]{'location_x'} == $dame_x && $ship[$i]{'location_y'} == $dame_y)
+        {
+            my $new_HP = $ship[$i]{'HP'} - $fire_ship{'dame'};
+            
+            #the ship has been destroy
+            if($new_HP <=0){
+                $ship[$i]{'location_x'} = -1;
+                $ship[$i]{'location_y'} = -1;
+                $ship[$i]{'HP'} = 0;
+                return 1;
+            }
+            else{
+                $ship[$i]{'HP'} = $new_HP;
+                return 0;
+            }
+        }
+    } 
+}
+
 sub getShipByPosition(){
     
     my($location_x,$location_y)=(@_);

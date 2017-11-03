@@ -35,7 +35,7 @@ $socket->recv($ship_string,1024);
 
 my @ship = ShipStringConvertToArray($ship_string);
 
-print Dumper @ship;
+#print Dumper @ship;
 #receive the dice result of the server
 my $dice;
 $socket->recv($dice,1);
@@ -44,7 +44,7 @@ my $player1_ship = 5;
 my $player2_ship = 5;
 #end turn will check if the user is end of turn
 my $end_turn;
-my($return_map,$play,$to_x,$to_y,$at_x,$at_y,$index_x,$index_y);
+my($return_map,$play,$to_x,$to_y,$at_x,$at_y,$index_x,$index_y,$isDestroy);
 
 if($dice == 2)
 {
@@ -92,10 +92,9 @@ if($dice == 2)
         $socket->recv($ship_string,1024);
         select(undef, undef, undef, 0.25);
 
-        print $ship_string. "\n";
         @ship = ShipStringConvertToArray($ship_string);
 
-        print Dumper @ship;
+        #print Dumper @ship;
 
         print_map(@map);
 
@@ -129,20 +128,19 @@ else
         $index_y = $input[1];
 
         #player turn
-        ($return_map,$play,$to_x,$to_y,$at_x,$at_y,$ship_string) = player_action(1,$index_x,$index_y,@map);
+        ($return_map,$play,$to_x,$to_y,$at_x,$at_y,$isDestroy,$ship_string) = player_action(1,$index_x,$index_y,@map);
         #if the user select a stuck ship the user have to select again
         while($play==0){
                 @input  = select_ship(1,@map);
                 $index_x = $input[0];
                 $index_y = $input[1];
-                ($return_map,$play,$to_x,$to_y,$at_x,$at_y,$ship_string) = player_action(1,$index_x,$index_y,@map);
+                ($return_map,$play,$to_x,$to_y,$at_x,$at_y,$isDestroy,$ship_string) = player_action(1,$index_x,$index_y,@map);
         }
         
         @map = @$return_map;
-        print "ship String: " . $ship_string. "\n";
 
         #reduce the ship of enermy by 
-        if($at_x ne "f" && $at_y ne "f")
+        if($isDestroy==1)
         {
                 $player2_ship--;
         }
@@ -198,20 +196,20 @@ while(end_game($player1_ship,$player2_ship)==0){
         $index_y = $input[1];
 
         #player turn
-        ($return_map,$play,$to_x,$to_y,$at_x,$at_y,$ship_string) = player_action(1,$index_x,$index_y,@map);
+        ($return_map,$play,$to_x,$to_y,$at_x,$at_y,$isDestroy,$ship_string) = player_action(1,$index_x,$index_y,@map);
         #if the user select a stuck ship the user have to select again
         while($play==0){
                 @input  = select_ship(1,@map);
                 $index_x = $input[0];
                 $index_y = $input[1];
-                ($return_map,$play,$to_x,$to_y,$at_x,$at_y,$ship_string) = player_action(1,$index_x,$index_y,@map);
+                ($return_map,$play,$to_x,$to_y,$at_x,$at_y,$isDestroy,$ship_string) = player_action(1,$index_x,$index_y,@map);
         }
         
         @map = @$return_map;
         
 
         #reduce the ship of enermy by 
-        if($at_x ne "f" && $at_y ne "f")
+        if($isDestroy ==1)
         {
                 $player2_ship--;
         }
@@ -299,7 +297,7 @@ while(end_game($player1_ship,$player2_ship)==0){
         $socket->recv($ship_string,1024);
         ShipStringConvertToArray($ship_string);
 
-        print Dumper @ship;
+        #print Dumper @ship;
         
         print_map(@map);
 
