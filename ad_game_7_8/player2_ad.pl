@@ -31,11 +31,7 @@ print "waiting for other player\n";
     
     my @map = create_map();
     print_map(@map);
-
-    #conver the map to string and send to client
-    my $string_map = mapToString(@map); 
-    $client_socket->send($string_map);
-    select(undef, undef, undef, 0.25);
+    print_ship("2");
 
     #get all the ship value of player 2 and send it to player 1
     my @ship = getShipArray();
@@ -43,6 +39,13 @@ print "waiting for other player\n";
     $client_socket->send($ship_string);
     select(undef, undef, undef, 0.25);
     $ship_string="";
+
+    #conver the map to string and send to client
+    my $string_map = mapToString(@map); 
+    $client_socket->send($string_map);
+    select(undef, undef, undef, 0.25);
+
+
 
     #print Dumper @ship;
 
@@ -112,6 +115,7 @@ print "waiting for other player\n";
         #print Dumper @ship;
 
         print_map(@map);
+        print_ship("2");
 
         print "Enermy selected ship at location: ". $index_x . $index_y."\n";
         if($to_x ne "f"  && $to_y ne "f"){
@@ -320,6 +324,7 @@ print "waiting for other player\n";
 
 
         print_map(@map);
+        print_ship("2");
 
         print "Enermy selected ship at location: ". $index_x . $index_y."\n";
         if($to_x ne "f"  && $to_y ne "f"){

@@ -21,6 +21,11 @@ my $socket = new IO::Socket::INET (
 die "cannot connect to the server $!\n" unless $socket;
 print "connected to the server\n";
 
+#receive ship string
+my $ship_string ="";
+$socket->recv($ship_string,1024);
+my @ship = ShipStringConvertToArray($ship_string);
+
 #receive the map from player2
 my $string_map;
 $socket->recv($string_map,1024);
@@ -29,11 +34,7 @@ my @map = mapToArray($string_map);
 
 print "The battle map:\n";
 print_map(@map);
-
-my $ship_string ="";
-$socket->recv($ship_string,1024);
-
-my @ship = ShipStringConvertToArray($ship_string);
+print_ship("1");
 
 #print Dumper @ship;
 #receive the dice result of the server
@@ -97,6 +98,7 @@ if($dice == 2)
         #print Dumper @ship;
 
         print_map(@map);
+        print_ship("1");
 
         print "Enermy selected ship at location: ".$index_x.$index_y."\n";
         if($to_x ne "f"  && $to_y ne "f"){
@@ -300,6 +302,7 @@ while(end_game($player1_ship,$player2_ship)==0){
         #print Dumper @ship;
         
         print_map(@map);
+        print_ship("1");
 
         print "Enermy selected ship at location: ".$index_x.$index_y."\n";
         if($to_x ne "f"  && $to_y ne "f"){

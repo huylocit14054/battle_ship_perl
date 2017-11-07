@@ -4,6 +4,7 @@ use warnings;
 use IO::Socket::INET;
 use Scalar::Util qw(looks_like_number);
 use Data::Dumper qw(Dumper);
+use Term::ANSIColor;
 #This is the file for game 
 
 
@@ -102,7 +103,7 @@ sub create_map(){
             $player2_ship--;
         }
     }
-    print Dumper @ship;
+
     @map 
 }
 
@@ -769,11 +770,13 @@ sub checkUp(){
     }
 }
 
-#print the map
-sub print_map()
+#print the map with no UI
+sub print_map1()
 {
     my @map = @_;
-    print("  a b c d e\n");
+    print color('bold blue');
+    print "  a b c d e\n";
+    print color('reset');
     for(my $i=0; $i<5 ;$i++){
         print $i+1;
         print " ";
@@ -782,6 +785,61 @@ sub print_map()
             print " ";
         }
         print"\n";
+    }
+}
+#print UI map
+sub print_map(){
+    my @map = @_;
+    print color('bold blue');
+    print "       a          b          c          d          e\n\n";
+    print color('reset');
+    for(my $i=0; $i<5 ;$i++){
+        print color('bold blue');
+        print $i+1;
+        print " ";
+        print color('reset');
+        for(my $j=0; $j<5 ;$j++){
+            if($map[$i][$j]==0){
+                print color('MAGENTA');
+                print " ~~~~~~~~~ ";
+                print color('reset');
+            }
+            else{
+               my %s = getShipByPosition($i,$j);
+               if($s{'belong_to'} ==1){
+                print color('GREEN');
+                print " ".$s{'belong_to'}."[HP:".$s{'HP'}."] ";
+                print color('reset');
+               }
+               if($s{'belong_to'} ==2){
+                print color('YELLOW');
+                print " ".$s{'belong_to'}."[HP:".$s{'HP'}."] ";
+                print color('reset');
+               }
+            }
+        }
+        print"\n\n";
+    }
+}
+
+#print ship for user 
+sub print_ship(){
+    my $ship_value = $_[0];
+    
+    print "Your ship status:\n";
+    #run the ship array and get the info of the ship
+    for(my $i=0 ; $i<10 ; $i++){
+        if($ship[$i]{'belong_to'} eq $ship_value){
+            my $location_x = $ship[$i]{'location_x'} + 1; 
+            if($ship[$i]{'HP'}==0){
+                print color('RED');
+                print "Ship{HP: " . $ship[$i]{'HP'}.", Dame: ".$ship[$i]{'dame'}. ", Location: ". $location_x .$column{$ship[$i]{'location_y'}} ."}\n";
+                print color('reset');
+            }
+            else{
+                print "Ship{HP: " . $ship[$i]{'HP'}.", Dame: ".$ship[$i]{'dame'}. ", Location: ".  $location_x .$column{$ship[$i]{'location_y'}} . "}\n";
+            }
+        }
     }
 }
 
